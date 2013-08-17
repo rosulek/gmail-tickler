@@ -12,15 +12,20 @@
 /*
  * 1: SET UP config options 
  */
-var EMAIL_PREFIX  = "USERNAME+tickler"; // for email addressed to USERNAME+tickler+cmd@gmail.com
+var EMAIL_PREFIX  = "USERNAME+tickler"; // where USERNAME@gmail.com is your regular address
 var TICKLER_LABEL = "tickler";          
 var FINISH_LABEL  = "tickler/finished"; // label name, or `false`
 var ERROR_LABEL   = "tickler/error";    // label name, or `false`
-var MARK_UNREAD   = true;               // when restoring a message to the inbox
+var MARK_UNREAD   = true;               // mark unread when restoring a message to the inbox
 var EMAIL_ERRORS  = true;               // report error message as email reply within thread
 
-// for dates that don't specify a time-of-day, use the following, as [hr,min,sec,milli]:
-var DEFAULT_TIME  = [8, 0, 0, 0];       // hour is in 24-hour format
+var DEFAULT_TIME  = [8, 0, 0, 0];       // for dates that don't specify a time-of-day,
+                                        // use the following, as [hr,min,sec,milli];
+                                        // note: hour is in 24-hour format
+
+var FUDGE_FACTOR  = 15;                 // a thread will be restored to the inbox
+                                        // as long as its deadline is no more than
+                                        // this many minutes in the future.
 
 /*
  * 2. RUN THIS ONCE, first, to create necessary labels
@@ -53,6 +58,8 @@ function processThreads() {
         }
 
         Logger.log("thread target time is " + info.target);
+
+        now.setMinutes( now.getMinutes() + FUDGE_FACTOR );
 
         if (now.getTime() >= info.target.getTime())
             untickleThread(threads[i]);
@@ -229,8 +236,7 @@ function parseDate(s, baseline) {
 }
 
 function untickleThread(t) {
-    Logger.log("untickling thread `" + t.getFirstMessageSubject() + "`");
-    t.moveToInbox();
+    Logger.log("restoring thread `" + t.getFirstMessageSubject() + "`");
 
     if (MARK_UNREAD)
         t.markUnread();
@@ -239,6 +245,7 @@ function untickleThread(t) {
         GmailApp.getUserLabelByName(FINISH_LABEL).addToThread(t);
 
     GmailApp.getUserLabelByName(TICKLER_LABEL).removeFromThread(t);
+    t.moveToInbox();
 }
 
 function errorThread(t, info) {
