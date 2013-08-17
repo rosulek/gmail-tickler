@@ -14,7 +14,7 @@
  */
 var EMAIL_PREFIX  = "USERNAME+tickler"; // where USERNAME@gmail.com is your regular address
 var TICKLER_LABEL = "tickler";          
-var FINISH_LABEL  = "tickler/finished"; // label name, or `false`
+var FINISH_LABEL  = "tickler/restored"; // label name, or `false`
 var ERROR_LABEL   = "tickler/error";    // label name, or `false`
 var MARK_UNREAD   = true;               // mark unread when restoring a message to the inbox
 var EMAIL_ERRORS  = true;               // report error message as email reply within thread
@@ -142,6 +142,7 @@ function parseDate(s, baseline) {
             }
 
             s = s.substr(matches[0].length);
+            continue;
         }
 
         matches = s.match(/^(tomorrow|today|(next\s*)?(sun(?:day)?|mon(?:day)?|tue(?:s(?:day)?)?|wed(?:n(?:es(?:day)?)?)?|thu(?:r(?:s(?:day)?)?)?|fri(?:day)?|sat(?:urday)?))/i);
@@ -170,6 +171,7 @@ function parseDate(s, baseline) {
             }
 
             s = s.substr(matches[0].length);
+            continue;
         }
 
         matches = s.match(/^(?:on\s*)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*(\d+)/i);
@@ -188,9 +190,10 @@ function parseDate(s, baseline) {
             theDate.setDate(day);
 
             s = s.substr(matches[0].length);
+            continue;
         }
 
-        matches = s.match(/^(?:at\s*)?(noon|midnight|([1-9]|1[012])([ap]m?))/);
+        matches = s.match(/^(?:at\s*)?(noon|midnight|([1-9]|1[012])(?:([0-5]\d))?([ap]m?)|([01]?\d|2[0-4])(\d\d))/);
         if (matches) {
             if (timeReason) {
                 conflicts = [timeReason, matches[0]];
@@ -200,15 +203,20 @@ function parseDate(s, baseline) {
 
             var hour;
             if (matches[1].toLowerCase() == "noon") {
-                hour = 12;
-            } else if (matches[1].toLowerCase() == "noon") {
-                hour = 0;
+                hour = 12; minute = 0;
+            } else if (matches[1].toLowerCase() == "midnight") {
+                hour = 0;  minute = 0;
+            } else if (matches[2]) {
+                hour = (parseInt(matches[2], 10) % 12) + (matches[4].substr(0,1).toLowerCase() == "p" ? 12 : 0);
+                minute = matches[3] ? parseInt(matches[3], 10) : 0;
             } else {
-                hour = (parseInt(matches[2], 10) % 12) + (matches[3].match(/^p/i) ? 12 : 0);
-            }
-    
-            theDate.setHours(hour, 0, 0, 0);
+                hour = parseInt(matches[5], 10);
+                minute = parseInt(matches[6], 10);
+            }   
+            
+            theDate.setHours(hour, minute, 0, 0);
             s = s.substr(matches[0].length);
+            continue;
         }
 
     }

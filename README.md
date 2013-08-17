@@ -29,9 +29,9 @@ You can compose a new email to this special address, forward an existing thread 
 Some examples of date/time specifications:
 
 * USERNAME+tickler+2days@gmail.com
-* USERNAME+tickler+next+monday@gmail.com
-* USERNAME+tickler+jul+17+11am@gmail.com
-* USERNAME+tickler+tomorrow+at.5.pm@gmail.com
+* USERNAME+tickler+next+monday+235pm@gmail.com
+* USERNAME+tickler+jul+17+1400@gmail.com
+* USERNAME+tickler+tomorrow+at.5pm@gmail.com
 * USERNAME+tickler+in.4.weeks@gmail.com
 * USERNAME+tickler+noon+on+tuesday@gmail.com
 
