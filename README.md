@@ -35,6 +35,8 @@ Some examples of date/time specifications:
 * USERNAME+tickler+in.4.weeks@gmail.com
 * USERNAME+tickler+noon+on+tuesday@gmail.com
 
+You can use the `test.html` file in this repository to play around with the date/time specification syntax.
+
 The processing script will look for the *last* message in the thread that is addressed to `USERNAME+tickler+anything@gmail.com`. So the thread can continue after it is put in the tickler file. If someone else follows up to the thread, it will reappear in the inbox as normal (but still be processed for the tickler action, as long as it has the `tickler` label).
 
 You can change the restoration date by adding another message to the thread, addressed to one of the special email addresses. To cancel the tickler action on a thread completely, just remove the `tickler` label from the thread.

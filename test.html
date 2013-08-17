@@ -1,111 +1,37 @@
-/*
- * Gmail Tickler, a Google Apps script
- * written by Mike Rosulek, rosulekm@eecs.oregonstate.edu
- *
- * Revision: 17 Aug 2013
- *
- * Made available under the MIT license. See the license and instructions at:
- *
- *          http://github.com/rosulek/gmail-tickler
- */ 
-
-/*
- * 1: SET UP config options 
- */
-var EMAIL_PREFIX  = "USERNAME+tickler"; // where USERNAME@gmail.com is your regular address
-var TICKLER_LABEL = "tickler";          
-var FINISH_LABEL  = "tickler/restored"; // label name, or `false`
-var ERROR_LABEL   = "tickler/error";    // label name, or `false`
-var MARK_UNREAD   = true;               // mark unread when restoring a message to the inbox
-var EMAIL_ERRORS  = true;               // report error message as email reply within thread
-
-var DEFAULT_TIME  = [8, 0, 0, 0];       // for dates that don't specify a time-of-day,
-                                        // use the following, as [hr,min,sec,milli];
-                                        // note: hour is in 24-hour format
-
-var FUDGE_FACTOR  = 15;                 // a thread will be restored to the inbox
-                                        // as long as its deadline is no more than
-                                        // this many minutes in the future.
-
-/*
- * 2. RUN THIS ONCE, first, to create necessary labels
- */
-function setup() {
-    GmailApp.createLabel(TICKLER_LABEL);
-    if (FINISH_LABEL)
-        GmailApp.createLabel(FINISH_LABEL);
-    if (ERROR_LABEL)
-        GmailApp.createLabel(ERROR_LABEL);
-}
-
-/*
- * 3. SET A TRIGGER for this function:
- */
-function processThreads() {
-    Logger.clear();
-    var label    = GmailApp.getUserLabelByName(TICKLER_LABEL);
-    var threads  = label.getThreads();
-
-    Logger.log("processing " + threads.length + " threads from label " + TICKLER_LABEL);
-
-    var now  = new Date();
-    for (var i = 0; i < threads.length; i++) {
-        var info = ticklerInfo(threads[i]);
-
-        if (! info.target || ! info.target['getTime']) {
-            errorThread(threads[i], info);
-            continue;
-        }
-
-        Logger.log("thread target time is " + info.target);
-
-        now.setMinutes( now.getMinutes() + FUDGE_FACTOR );
-
-        if (now.getTime() >= info.target.getTime())
-            untickleThread(threads[i]);
-    }
-}
+<script type="text/javascript" src="jquery.min.js"></script>
 
 
-///////////////////
+<p>
+    Send an email to username+tickler+<input id="s" value="tomorrow" style="width:200px">@gmail.com
+</p>
 
-function ticklerInfo(t) {
-    var msgs = t.getMessages();
-    var result = {};
+<p>
+    On this date: <span id="now"></span>
+</p>
 
-    Logger.log("extracting info from thread `" + t.getFirstMessageSubject() + "`");
+<p>
+    And it will be scheduled to appear in your inbox at: <span id="result"></span>
+</p>
 
-    for (var i = msgs.length - 1; i >= 0; i--) {
-        var m = msgs[i];
-        var recpts = m.getTo() + "," + m.getCc() + "," + m.getBcc();
-        if (recpts.indexOf( EMAIL_PREFIX ) >= 0) {
-            result.msg = m;
-            var suffix = recpts.substr( recpts.indexOf(EMAIL_PREFIX) + EMAIL_PREFIX.length );
-            var match  = suffix.match(/^[^@]+/);
-            if (match) {
-                result.command = match[0].replace(/\.|\+/g, " ");
-                Logger.log("message #" + (i+1) + " of thread contains tickler command: `" + result.command + "`");
-            }
-            break;
-        }
-    }
+<p>
+    Try these: <ul id="examples"></ul>
+</p>
 
-    if (result.command)
-        result.target = parseDate(result.command, result.msg.getDate());
-    else
-        Logger.log("no tickler command found");
-
-    return result;
-}
-
+<script type="text/javascript">
 
 var DOW    = { sun:0, mon:1, tue:2, wed:3, thu:4, fri:5, sat:6 };
 var MONTHS = { jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11 };
+var DEFAULT_TIME = [8,0,0,0]; // [h,m,s,milli]
 
 function parseDate(s, baseline) {
     var matches;
+
     var theDate = new Date(baseline.getTime()); // clone
     var timeReason, dateReason, ifPast, conflicts;
+
+    s = s.replace(/\+|\./g, " ");
+
+    console.log("----");
 
     var charsRemain = s.length + 1;
     while (charsRemain && charsRemain != s.length) {
@@ -116,6 +42,13 @@ function parseDate(s, baseline) {
         if (matches) {
             var unit = matches[2].substr(0,1).toLowerCase();
             var amount = parseInt(matches[1], 10);
+
+            console.log({
+                type:   "offset",
+                amount: amount,
+                unit:   unit,
+                src:    matches[0]
+            });
 
             if (dateReason) {
                 conflicts = [dateReason, matches[0]];
@@ -155,16 +88,31 @@ function parseDate(s, baseline) {
             dateReason = matches[0];
 
             if (matches[1].toLowerCase() == "tomorrow") {
+                console.log({
+                    type: "tomorrow",
+                    src:  matches[0]
+                });
                 theDate.setDate( theDate.getDate() + 1 );
 
             } else if (matches[1].toLowerCase() == "today") {
-                // do nothing
+                console.log({
+                    type: "today",
+                    src:  matches[0]
+                });
             } else {
                 var dow = DOW[ matches[3].substr(0,3).toLowerCase() ];
                 var offset = (dow + 7 - baseline.getDay()) % 7;
                 var next = !! matches[2];
                 if (dow >= baseline.getDay() && next)
                     offset += 7;
+
+                console.log({
+                    type:   "day-of-week",
+                    dow:    dow,
+                    next:   next,
+                    offset: offset,
+                    src:    matches[0]
+                });
 
                 theDate.setDate( theDate.getDate() + offset );
                 ifPast = "w";
@@ -178,6 +126,12 @@ function parseDate(s, baseline) {
         if (matches) {
             var mon = MONTHS[ matches[1].substr(0,3).toLowerCase() ];
             var day = parseInt(matches[2], 10)
+            console.log({
+                type:  "absolute date",
+                month: mon,
+                day:   day,
+                src:   matches[0]
+            });
 
             if (dateReason) {
                 conflicts = [dateReason, matches[0]];
@@ -193,7 +147,7 @@ function parseDate(s, baseline) {
             continue;
         }
 
-        matches = s.match(/^(?:at\s*)?(noon|midnight|([1-9]|1[012])(?:([0-5]\d))?([ap]m?)|([01]?\d|2[0-4])(\d\d))/);
+        matches = s.match(/^(?:at\s*)?(noon|midnight|([1-9]|1[012])(?:([0-5]\d))?([ap]m?)|([01]?\d|2[0-4])(\d\d)(?![apAP0-9]))/i);
         if (matches) {
             if (timeReason) {
                 conflicts = [timeReason, matches[0]];
@@ -214,6 +168,13 @@ function parseDate(s, baseline) {
                 minute = parseInt(matches[6], 10);
             }   
             
+            console.log({
+                type:   "time",
+                hour:   hour,
+                minute: minute,
+                src:    matches[0]
+            });
+    
             theDate.setHours(hour, minute, 0, 0);
             s = s.substr(matches[0].length);
             continue;
@@ -225,13 +186,15 @@ function parseDate(s, baseline) {
         return "`" + conflicts[0] + "` conflicts with `" + conflicts[1] + "`"
 
     if (s.match(/\S/)) {
+        console.log({ type: "unknown", src: s });
         return "unrecognized: `" + s + "`";
     }
 
     if (! timeReason)
         theDate.setHours.apply(theDate, DEFAULT_TIME);
-  
+
     if (theDate.getTime() < baseline.getTime()) {
+        console.log("date in past, so adding 1 " + ifPast);
         if (ifPast == "y")
             theDate.setFullYear( theDate.getFullYear() + 1);
         else if (ifPast == "w")
@@ -243,39 +206,27 @@ function parseDate(s, baseline) {
     return theDate;
 }
 
-function untickleThread(t) {
-    Logger.log("restoring thread `" + t.getFirstMessageSubject() + "`");
 
-    if (MARK_UNREAD)
-        t.markUnread();
+var myBaseline = new Date();
 
-    if (FINISH_LABEL)
-        GmailApp.getUserLabelByName(FINISH_LABEL).addToThread(t);
+$("#now").html( myBaseline );
 
-    GmailApp.getUserLabelByName(TICKLER_LABEL).removeFromThread(t);
-    t.moveToInbox();
-}
-
-function errorThread(t, info) {
-    Logger.log("reporting error for thread `" + t.getFirstMessageSubject() + "`");
-    t.moveToInbox();
-    GmailApp.getUserLabelByName(TICKLER_LABEL).removeFromThread(t);
-
-    if (info.msg && EMAIL_ERRORS) {
-        var err;
-        if (! info.command)
-            err = "No tickler command found!";
-        else if (! info.target['getTime'])
-            err = "Error processing tickler command: " + info.target;
-        else
-            err = "Unknown error!?";
-
-        Logger.log("error was: " + err);
-        info.msg.reply(err, {noReply: true});
+$("#s").on("keyup",
+    function() {
+        $("#result").html( parseDate($("#s").val(), myBaseline) );
     }
+);
 
-    if (ERROR_LABEL)
-        GmailApp.getUserLabelByName(ERROR_LABEL).addToThread(t);
+var EXAMPLES = ["2days", "next+monday+235pm", "jul+17+1400", "tomorrow+at.5pm", "in.4.weeks", "noon+on+tuesday"];
 
+for (var i=0; i<EXAMPLES.length; i++) {
+    $("#examples").append("<li><a href='#'>" + EXAMPLES[i] + "</a></li>");
 }
+
+$("#examples").on("click", "a", function() {
+    $("#s").val( $(this).text() );
+    $("#s").trigger("keyup");
+});
+
+</script>
 
