@@ -9,7 +9,7 @@ Made available under the MIT license.
 
 In "Getting Things Done" (GTD) terminology, a **tickler** is a collection of items that require action at some time in the future. These items are kept "out of sight, out of mind" in a separate *tickler file* until their specified date.
 
-This script provides tickler functionality completely within Gmail. By sending email to yourself and including a special command, the email thread is moved out of your inbox until the date/time that you specify.
+This script provides tickler functionality completely within Gmail. By either sending email to yourself in a particular way or applying a particular label, the email thread is moved out of your inbox until the date/time that you specify.
 
 
 #### Followupthen:
@@ -22,31 +22,39 @@ This script was inspired by the very clever [followupthen.com](http://followupth
 
 ## How to Use This Script:
 
-From Gmail, send email to the address `USERNAME+tickler+CMD@gmail.com`, where `USERNAME@gmail.com` is your normal Gmail address, and `CMD` specifies the date/time you want the thread to be restored to your inbox.
+There are two ways to "tickle" something:
 
-You can compose a new email to this special address, forward an existing thread to that address, or include that address as a Bcc on an email that you'll be sending anyway. All of these actions will have the effect of activating the tickler on the entire thread.
+1. From Gmail, send email to the address `USERNAME+tickler+CMD@gmail.com`, where `USERNAME@gmail.com` is your normal Gmail address, and `CMD` is a "tickler command" (see below) that specifies the date/time you want the thread to be restored to your inbox. You can compose a new email to this special address, forward an existing thread to that address, or include that address as a Bcc on an email that you'll be sending anyway. All of these actions will have the effect of activating the tickler on the entire thread.
 
-Some examples of supported date/time specification commands:
+2. Apply a label named `tickler/CMD` to an existing thread, where `CMD` is a tickler command. You can create any new label with this form and it will be recognized, as long as it starts with `tickler/`.
 
-* Amount of time from now: `tomorrow`, `1+day`, `3wks`, `in+1month`, `in+4+hrs`, ...
+### Tickler commands:
 
-* Time of day: `11pm`, `2359` (24-hour time), `at+230am`, `noon`, ...
+Here are some examples of supported tickler commands:
 
-* Absolute date: `aug11`, `jan+1`, ...
+> **Note:** When using the command in an email address, you'll replace spaces with `+` characters (example: `USERNAME+tickler+next+tuesday@gmail.com`). When using the command in a label, you'll replace spaces with slashes (example: `tickler/next/tuesday`).
 
-* Day of week: `next+tuesday`, `mon`, `next+sat`, ...
+* Amount of time from now: `tomorrow`, `1 day`, `3wks`, `in 1month`, `in 4 hrs`, ...
 
-* Combinations of the above: `1130am+monday`, `jun+7+noon`, `1day+at+2pm`, `1am+on+sat`, ...
+* Time of day: `11pm`, `2359` (24-hour time), `at 230am`, `noon`, ...
 
-Commands like `jul+17`, `next+tuesday`, `in+3+days` that don't specify a time of day, will restore the email at 8am on the requested day. This default time-of-day can be configured in the script.
+* Absolute date: `aug11`, `jan 1`, ...
 
-Specifying a date like `sat+1pm` on a Saturday will schedule the email for today if it's currently before 1pm, otherwise for a week from today. Similarly, specifying `aug+1+1pm` on August 1 will schedule the email for either today or next year's August 1. If you're really interested, you can use the `test.html` file in this repository to play around with the date/time specification syntax.
+* Day of week: `next tuesday`, `mon`, `next sat`, ...
+
+* Combinations of the above: `1130am monday`, `jun 7 noon`, `1day at 2pm`, `1am on sat`, ...
+
+Commands like `jul 17`, `next tuesday`, `in 3 days` that don't specify a time of day, will restore the email at 8am on the requested day. This default time-of-day can be configured in the script.
+
+Specifying a date like `sat 1pm` on a Saturday will schedule the email for today if it's currently before 1pm, otherwise for a week from today. Similarly, specifying `aug 1 1pm` on August 1 will schedule the email for either today or next year's August 1. If you're really interested, you can use the `test.html` file in this repository to play around with the date/time specification syntax.
+
+### More details:
 
 The processing script will look for the *last* message in the thread that is addressed to `USERNAME+tickler+anything@gmail.com`. So the thread can continue after it is put in the tickler file. If someone else follows up to the thread, it will reappear in the inbox as normal (but still be processed for the tickler action, as long as it has the `tickler` label).
 
 You can change the restoration date by adding another message to the thread, addressed to one of the special email addresses. To cancel the tickler action on a thread completely, just remove the `tickler` label from the thread.
 
-Relative dates like `5+days`, `tomorrow`, `in+3+yrs` are relative to the message within the thread that contains the tickler-command. Other messages in the thread will not affect the restoration time.
+Some commands like `5 days`, `tomorrow`, `in 3 yrs` are relative dates. For email-based tickling, the restoration time is computed relative to the message within the thread that contains the tickler-command. Other messages in the thread will not affect the restoration time. For label-based tickling, the restoration time is computed relative to the last message in the thread (which can change if someone follows up!), not the date that the label was added! As far as I know it is not possible to determine when a label was applied to a thread.
 
 If the processing script is unable to understand the date/time specification of a thread that has the `tickler` label, it will move that thread to the inbox, put the `tickler/error` label on it, and (by default) reply to the thread with an error message.
 
@@ -63,7 +71,7 @@ Tickled threads will be restored to the inbox on the first time the processing s
 
 > Note: there is an option in the tickler script to "fudge" all times by a given amount. So if you set the fudge factor to 15 minutes, then an email designated for 2pm will be placed in your inbox even if the tickler script happens to run at 1:45pm. Still, the disclaimers above all apply to the "fudged" time.
 
-> A sensible usage of this fudge factor is to set it equal to the triggering interval. For example, set the fudge factor to 1 hour, and trigger the processing script every hour. That way, forwarding a thread to `USERNAME+tickler+2pm@gmail.com` means "restore this thread to the inbox by 2pm at the latest; i.e., sometime in the hour preceding 2pm."
+> A sensible usage of this fudge factor is to set it equal to the triggering interval. For example, set the fudge factor to 1 hour, and trigger the processing script every hour. That way, tickling a thread to `2pm` means "restore this thread to the inbox by 2pm at the latest; i.e., sometime in the hour preceding 2pm."
 
 ## Installation:
 
@@ -81,3 +89,8 @@ Tickled threads will be restored to the inbox on the first time the processing s
 
 4. **Add a Gmail filter** to get messages into the tickler file. You should add a filter for the search query `to:USERNAME+tickler from:me`, to bypass the inbox and assign the `tickler` label to messages. Yes, you can literally include `from:me` in the filter.
 
+## Changelog:
+
+17 Aug 2013: initial version and quick bugfixes
+
+28 Jul 2014: added support for label-based tickling

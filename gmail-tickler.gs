@@ -2,7 +2,7 @@
  * Gmail Tickler, a Google Apps script
  * written by Mike Rosulek, rosulekm@eecs.oregonstate.edu
  *
- * Revision: 17 Aug 2013
+ * Revision: 28 Jul 2014
  *
  * Made available under the MIT license. See the license and instructions at:
  *
@@ -12,20 +12,30 @@
 /*
  * 1: SET UP config options 
  */
-var EMAIL_PREFIX  = "USERNAME+tickler"; // where USERNAME@gmail.com is your regular address
-var TICKLER_LABEL = "tickler";          
-var FINISH_LABEL  = "tickler/restored"; // label name, or `false`
-var ERROR_LABEL   = "tickler/error";    // label name, or `false`
-var MARK_UNREAD   = true;               // mark unread when restoring a message to the inbox
-var EMAIL_ERRORS  = true;               // report error message as email reply within thread
+var EMAIL_PREFIX   = "USERNAME+tickler"; // where USERNAME@gmail.com is your regular address
+var TICKLER_LABEL  = "tickler";          
+var FINISH_LABEL   = "tickler/finished"; // label name, or `false`
+var ERROR_LABEL    = "tickler/error";    // label name, or `false`
+var MARK_UNREAD    = true;               // mark unread when restoring a message to the inbox
+var EMAIL_ERRORS   = true;               // report error message as email reply within thread
 
-var DEFAULT_TIME  = [8, 0, 0, 0];       // for dates that don't specify a time-of-day,
-                                        // use the following, as [hr,min,sec,milli];
-                                        // note: hour is in 24-hour format
+var CLEANUP_LABELS = true;               // remove empty tickler-command labels
+var EXEMPT_LABELS  =                     // labels to have around even if empty
+    [ "tomorrow", "sun", "mon", "tue",
+      "wed", "thu", "fri", "sat",
+      "1wk", "2wks"
+    ].map( function(x){ return TICKLER_LABEL + "/" + x });
 
-var FUDGE_FACTOR  = 15;                 // a thread will be restored to the inbox
-                                        // as long as its deadline is no more than
-                                        // this many minutes in the future.
+
+var DEFAULT_TIME   = [8, 0, 0, 0];       // for dates that don't specify a time-of-day,
+                                         // use the following, as [hr,min,sec,milli];
+                                         // note: hour is in 24-hour format
+
+var FUDGE_FACTOR   = 15;                 // a thread will be restored to the inbox
+                                         // as long as its deadline is no more than
+                                         // this many minutes in the future.
+
+var DRY_RUN        = false;              // set to true to make no changes (log only)
 
 /*
  * 2. RUN THIS ONCE, first, to create necessary labels
@@ -36,6 +46,10 @@ function setup() {
         GmailApp.createLabel(FINISH_LABEL);
     if (ERROR_LABEL)
         GmailApp.createLabel(ERROR_LABEL);
+
+    for (var i=0; i<EXEMPT_LABELS.length; i++) {
+        GmailApp.createLabel(EXEMPT_LABELS[i]);
+    }
 }
 
 /*
@@ -43,10 +57,10 @@ function setup() {
  */
 function processThreads() {
     Logger.clear();
-    var label    = GmailApp.getUserLabelByName(TICKLER_LABEL);
-    var threads  = label.getThreads();
 
-    Logger.log("processing " + threads.length + " threads from label " + TICKLER_LABEL);
+    var threads = getThreadsToTickle();
+
+    Logger.log("processing " + threads.length + " threads in all");
 
     var now  = new Date();
     for (var i = 0; i < threads.length; i++) {
@@ -64,34 +78,88 @@ function processThreads() {
         if (now.getTime() >= info.target.getTime())
             untickleThread(threads[i]);
     }
+
+    if (CLEANUP_LABELS) cleanupLabels();
 }
 
+// don't go beyond this point! ... or do... I'm a code comment, not a cop.
+////////////////////////////////////////////////////////////////////////////
 
-///////////////////
+
+function getThreadsToTickle() {
+    var label    = GmailApp.getUserLabelByName(TICKLER_LABEL);
+    var threads  = label.getThreads();
+
+    Logger.log("found " + threads.length + " messages labeled: " + TICKLER_LABEL);
+
+    var tlabels = getAllTicklerCmdLabels();
+    for (var i=0; i<tlabels.length; i++) {
+        var newthreads = tlabels[i].getThreads();
+        if (newthreads.length) {
+            Logger.log("found " + newthreads.length + " messages labeled: " + tlabels[i].getName());
+            for (var j=0; j<newthreads.length; j++) {
+                threads.push( newthreads[j] );
+            }
+        }
+    }
+
+    return threads;
+}
+
+function getAllTicklerCmdLabels() {
+    return GmailApp.getUserLabels().filter( function(lbl) { return isTicklerCmd(lbl) } );
+}
+
+function isTicklerCmd(lbl) {
+    var lblname = lbl.getName();
+    return lblname.indexOf(TICKLER_LABEL + "/") == 0
+                && lblname.indexOf(FINISH_LABEL) != 0
+                && lblname.indexOf(ERROR_LABEL) != 0;
+}
+
+function getTicklerCmdLabels(t) {
+    return t.getLabels().filter( function(lbl) { return isTicklerCmd(lbl) } );
+}
 
 function ticklerInfo(t) {
     var msgs = t.getMessages();
-    var result = {};
+    var result = { baseline: msgs[msgs.length-1].getDate() };
 
     Logger.log("extracting info from thread `" + t.getFirstMessageSubject() + "`");
+
+    // tickler command from email target
 
     for (var i = msgs.length - 1; i >= 0; i--) {
         var m = msgs[i];
         var recpts = m.getTo() + "," + m.getCc() + "," + m.getBcc();
         if (recpts.indexOf( EMAIL_PREFIX ) >= 0) {
-            result.msg = m;
             var suffix = recpts.substr( recpts.indexOf(EMAIL_PREFIX) + EMAIL_PREFIX.length );
             var match  = suffix.match(/^[^@]+/);
             if (match) {
                 result.command = match[0].replace(/\.|\+/g, " ");
+                result.baseline = m.getDate();
                 Logger.log("message #" + (i+1) + " of thread contains tickler command: `" + result.command + "`");
             }
             break;
         }
     }
 
+    // tickler command from labels
+
+    var labels = getTicklerCmdLabels(t);
+    for (var i = 0; i<labels.length; i++) {
+        var cmd = labels[i].getName().substr( TICKLER_LABEL.length + 1 ); // +1 for trailing slash
+        cmd = cmd.replace(/\/|\./g, " ");
+        if (! result.command) {
+            result.command = cmd;
+        } else {
+            result.command += " " + cmd;
+        }
+        Logger.log("thread also contains label " + labels[i].getName() + " with command " + cmd);
+    }
+
     if (result.command)
-        result.target = parseDate(result.command, result.msg.getDate());
+        result.target = parseDate(result.command, result.baseline);
     else
         Logger.log("no tickler command found");
 
@@ -106,6 +174,8 @@ function parseDate(s, baseline) {
     var matches;
     var theDate = new Date(baseline.getTime()); // clone
     var timeReason, dateReason, ifPast, conflicts;
+
+    Logger.log("parsing tickler command `" + s + "` with baseline = " + baseline);
 
     var charsRemain = s.length + 1;
     while (charsRemain && charsRemain != s.length) {
@@ -142,7 +212,6 @@ function parseDate(s, baseline) {
             }
 
             s = s.substr(matches[0].length);
-            continue;
         }
 
         matches = s.match(/^(tomorrow|today|(?:on\s*)?(next\s*)?(sun(?:day)?|mon(?:day)?|tue(?:s(?:day)?)?|wed(?:n(?:es(?:day)?)?)?|thu(?:r(?:s(?:day)?)?)?|fri(?:day)?|sat(?:urday)?))/i);
@@ -171,7 +240,6 @@ function parseDate(s, baseline) {
             }
 
             s = s.substr(matches[0].length);
-            continue;
         }
 
         matches = s.match(/^(?:on\s*)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*(\d+)/i);
@@ -190,7 +258,6 @@ function parseDate(s, baseline) {
             theDate.setDate(day);
 
             s = s.substr(matches[0].length);
-            continue;
         }
 
         matches = s.match(/^(?:at\s*)?(noon|midnight|([1-9]|1[012])(?:([0-5]\d))?([ap]m?)|([01]?\d|2[0-3])([0-5]\d)(?![apAP0-9]))/i);
@@ -219,6 +286,7 @@ function parseDate(s, baseline) {
             continue;
         }
 
+
     }
 
     if (conflicts)
@@ -246,18 +314,39 @@ function parseDate(s, baseline) {
 function untickleThread(t) {
     Logger.log("restoring thread `" + t.getFirstMessageSubject() + "`");
 
+    if (DRY_RUN) return;
+
     if (MARK_UNREAD)
         t.markUnread();
 
     if (FINISH_LABEL)
         GmailApp.getUserLabelByName(FINISH_LABEL).addToThread(t);
 
+    var labels = getTicklerCmdLabels(t);
+    for (var i=0; i<labels.length; i++) {
+        t.removeLabel(labels[i]);
+    }
+
     GmailApp.getUserLabelByName(TICKLER_LABEL).removeFromThread(t);
     t.moveToInbox();
 }
 
+function cleanupLabels() {
+    var labels = getAllTicklerCmdLabels();
+    for (var i=0; i<labels.length; i++) {
+        var lname = labels[i].getName();
+        if (EXEMPT_LABELS.indexOf(lname) == -1 && labels[i].getThreads().length == 0) {
+            Logger.log("deleted empty tickler-command label " + lname);
+            GmailApp.deleteLabel(labels[i]);
+        }
+    }
+}
+
 function errorThread(t, info) {
-    Logger.log("reporting error for thread `" + t.getFirstMessageSubject() + "`");
+    Logger.log("reporting error for thread `" + t.getFirstMessageSubject() + "`: " + info.target);
+
+    if (DRY_RUN) return;
+
     t.moveToInbox();
     GmailApp.getUserLabelByName(TICKLER_LABEL).removeFromThread(t);
 
