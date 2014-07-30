@@ -37,6 +37,16 @@ Commands like `jul 17`, `next tuesday`, `in 3 days` that don't specify a time of
 
 Specifying a date like `sat 1pm` on a Saturday will schedule the email for today if it's currently before 1pm, otherwise for a week from today. Similarly, specifying `aug 1 1pm` on August 1 will schedule the email for either today or next year's August 1. If you're really interested, you can use the `test.html` file in this repository to play around with the date/time specification syntax.
 
+## More Usage Notes:
+
+How do you cancel the tickler on a thread? For email-address tickling, find the thread filed under the `tickler` label, and remove that label. For label-based tickling, remove the `tickler/command` label.
+
+Some of these tickler commands specify a *relative* deadline, like `next friday`, `in 3 hours`. But relative to what? 
+
+* If you've used email-address tickling, then the deadline is relative to the most recent message in the thread *for which `username+tickler+cmd@gmail.com` is a recipient*. So if other participants also follow up in the thread, the deadline won't be affected (but the message will also re-appear in the inbox in the meantime, because of the new activity in the thread).
+
+* If you've used label-based tickling, then the deadline is relative to the most recent message in the thread. So if other participants follow up in the thread, the deadline could move. Importantly, the deadline is **not** relative to the time you *applied* the label. As far as I know, there is no way to find out when a label was applied to a thread.
+
 ## Installation:
 
 1. **Set up the script:**
@@ -52,16 +62,6 @@ Specifying a date like `sat 1pm` on a Saturday will schedule the email for today
     * Add a new trigger for the function called `processThreads`, to be time-driven whenever you like. I suggest an hourly trigger.
 
 4. **Add a Gmail filter** to get messages into the tickler file. You should add a filter for the search query `to:USERNAME+tickler from:me`, to bypass the inbox and assign the `tickler` label to messages. Yes, you can literally include `from:me` in the filter.
-
-## More details:
-
-The processing script will look for the *last* message in the thread that is addressed to `USERNAME+tickler+anything@gmail.com`. So the thread can continue after it is put in the tickler file. If someone else follows up to the thread, it will reappear in the inbox as normal (but still be processed for the tickler action, as long as it has the `tickler` label).
-
-You can change the restoration date by adding another message to the thread, addressed to one of the special email addresses. To cancel the tickler action on a thread completely, just remove the `tickler` label from the thread.
-
-Some commands like `5 days`, `tomorrow`, `in 3 yrs` are relative dates. For email-based tickling, the restoration time is computed relative to the message within the thread that contains the tickler-command. Other messages in the thread will not affect the restoration time. For label-based tickling, the restoration time is computed relative to the last message in the thread (which can change if someone follows up!), not the date that the label was added! As far as I know it is not possible to determine when a label was applied to a thread.
-
-If the processing script is unable to understand the date/time specification of a thread that has the `tickler` label, it will move that thread to the inbox, put the `tickler/error` label on it, and (by default) reply to the thread with an error message.
 
 ## Fine Print / Known Limitations:
 
@@ -111,6 +111,8 @@ Google developers wrote [Gmail Snooze](http://googleappsdeveloper.blogspot.com/2
 
 ## To do list:
 
-(Figure out how to) Bundle the script as a [https://developers.google.com/apps-script/execution_web_apps](web app) that others can add easily.
+* (Figure out how to) Bundle the script as a [https://developers.google.com/apps-script/execution_web_apps](web app) that others can add easily.
 
-Wait until [http://www.theverge.com/2014/4/2/5574002/gmail-reportedly-testing-new-inbox-tabs-snooze-feature-for-messages](Google natively implements something like this anyway).
+* Wait until [http://www.theverge.com/2014/4/2/5574002/gmail-reportedly-testing-new-inbox-tabs-snooze-feature-for-messages](Google natively implements something like this anyway).
+
+* Better error reporting.
