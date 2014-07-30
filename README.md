@@ -105,7 +105,7 @@ Google developers wrote [Gmail Snooze](http://googleappsdeveloper.blogspot.com/2
 
 #### Boomerang:
 
-[http://www.boomeranggmail.com/](Boomerang) is an integrated browser extension and server-side script.
+[Boomerang](http://www.boomeranggmail.com/) is an integrated browser extension and server-side script.
 
 * Its interface is seamlessly integrated into Gmail, so it's much easier to use.
 
@@ -119,8 +119,8 @@ Google developers wrote [Gmail Snooze](http://googleappsdeveloper.blogspot.com/2
 
 ## To do list:
 
-* (Figure out how to) Bundle the script as a [https://developers.google.com/apps-script/execution_web_apps](web app) that others can add easily.
+* (Figure out how to) Bundle the script as a [web app](https://developers.google.com/apps-script/execution_web_apps) that others can add easily.
 
-* Wait until [http://www.theverge.com/2014/4/2/5574002/gmail-reportedly-testing-new-inbox-tabs-snooze-feature-for-messages](Google natively implements something like this anyway).
+* Wait until [Google natively implements something like this anyway](http://www.theverge.com/2014/4/2/5574002/gmail-reportedly-testing-new-inbox-tabs-snooze-feature-for-messages).
 
 * Better error reporting.
