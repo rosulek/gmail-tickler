@@ -83,13 +83,13 @@ Tickled threads will be restored to the inbox on the first time the processing s
 
 I encourage you to check out all of these and choose the one that's right for you. Here's my understanding of the major differences.
 
-#### Followupthen:
+#### Followup[then]:
 
-The tickle-by-email system has similar syntax to [followupthen.com](http://followupthen.com) (FUT), and other similar services. You include `datetime@followupthen.com` as a recipient of an email, and they will send that email back to you at the specified time.
+The tickle-by-email system has similar syntax to [followupthen.com](http://followupthen.com) (FUT), and other similar services like [followup.cc](http://followup.cc). You include `datetime@followupthen.com` as a recipient of an email, and they will send that email back to you at the specified time.
 
 * FUT syntax is a little cleaner: `datetime@followupthen.com` vs `yourname+tickler+datetime@followupthen.com`.
 
-* Using the Gmail Tickler script, your tickled emails never leave your Google's servers. I have no reason to be suspicious of FUT, but this script is a more paranoid solution (assuming you are already comfortable with Gmail holding your email).
+* Using the Gmail Tickler script, your tickled emails never leave your Google's servers. I have no reason to be suspicious of FUT in particular, but this script is a more paranoid solution (assuming you are already comfortable with Gmail holding your email).
 
 * FUT has more features: fancier date specifications, repeating events, replying to a group (instead of just making something appear in your own inbox).
 
@@ -102,6 +102,14 @@ Google developers wrote [Gmail Snooze](http://googleappsdeveloper.blogspot.com/2
 [Email Snooze](http://messymatters.com/snooze/) is a similar Apps Script.
 
 * Both snooze scripts only support simple snoozing of a certain number of days. Gmail Tickler supports absolute dates (e.g.: `aug2`), time-of-day, and relative dates other than "days" (e.g.: `2weeks`).
+
+#### Boomerang:
+
+[http://www.boomeranggmail.com/](Boomerang) is an integrated browser extension and server-side script.
+
+* Its interface is seamlessly integrated into Gmail, so it's much easier to use.
+
+* You have to authorize their service to access your Gmail account, and you have to trust that they keep their promise to only look at headers. Again, I don't have reason to be suspicious of them in particular, but it is not the most paranoid solution.
 
 ## Changelog:
 
