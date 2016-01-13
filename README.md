@@ -50,12 +50,11 @@ Some of these tickler commands specify a *relative* deadline, like `next friday`
 ## Installation:
 
 1. **Set up the script:**
-    * Go to [drive.google.com](http://drive.google.com), and create a new spreadsheet, called "Tickler" or something.
-    * In the "tools" menu of the spreadsheet, select "script editor".
-    * Select "blank project", and paste in code from the `gmail-tickler.gs` file in this repository. You'll have to change the configuration options near the top of the script to reflect your email address. There are other options as well, documented there.
+    * Go to [script.google.com](https://script.google.com/), and create a new script, called "Tickler" or something.
+    * Paste in code from the `gmail-tickler.gs` file in this repository. You'll have to change the configuration options near the top of the script to reflect your email address. There are other options as well, documented there.
 
 2. **Create the labels:** In the toolbar on the script editor is a dropdown where you can select a function to be executed. Select the `setup` function and press the play button. This will add the appropriate labels to your gmail. 
-    > *Note:* You'll have to authorize the spreadsheet to access your gmail at this point. And you'll have to refresh any gmail browser sessions to see the new labels, give them colors, etc.
+    > *Note:* You'll have to authorize the script to access your gmail at this point. And you'll have to refresh any gmail browser sessions to see the new labels, give them colors, etc.
 
 3. **Set up a time-driven trigger** for processing of the tickler file:
     * In the "resources" menu of the script editor, select "current project's triggers".
