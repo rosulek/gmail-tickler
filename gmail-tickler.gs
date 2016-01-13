@@ -63,6 +63,7 @@ function processThreads() {
     Logger.log("processing " + threads.length + " threads in all");
 
     var now  = new Date();
+    now.setMinutes( now.getMinutes() + FUDGE_FACTOR );
     for (var i = 0; i < threads.length; i++) {
         var info = ticklerInfo(threads[i]);
 
@@ -72,8 +73,6 @@ function processThreads() {
         }
 
         Logger.log("thread target time is " + info.target);
-
-        now.setMinutes( now.getMinutes() + FUDGE_FACTOR );
 
         if (now.getTime() >= info.target.getTime())
             untickleThread(threads[i]);
