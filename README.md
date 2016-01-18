@@ -47,6 +47,8 @@ Some of these tickler commands specify a *relative* deadline, like `next friday`
 
 * If you've used label-based tickling, then the deadline is relative to the most recent message in the thread. So if other participants follow up in the thread, the deadline could move. Importantly, the deadline is **not** relative to the time you *applied* the label. As far as I know, there is no way to find out when a label was applied to a thread.
 
+The tickler labels can also be applied using Gmail's built-in filters to let you automatically snooze emails matching certain queries to a certain day/time. You might want some emails, for example, to appear in your inbox only at the end of the work day, while you might want others postponed until Sunday afternoon so you can process them all at once.
+
 ## Installation:
 
 1. **Set up the script:**
