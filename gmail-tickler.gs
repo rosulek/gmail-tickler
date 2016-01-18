@@ -2,7 +2,7 @@
  * Gmail Tickler, a Google Apps script
  * written by Mike Rosulek, rosulekm@eecs.oregonstate.edu
  *
- * Revision: 28 Jul 2014
+ * Revision: 17 Jan 2016
  *
  * Made available under the MIT license. See the license and instructions at:
  *
