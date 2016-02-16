@@ -118,6 +118,10 @@ Google developers wrote [Gmail Snooze](http://googleappsdeveloper.blogspot.com/2
 
 28 Jul 2014: added support for label-based tickling
 
+12 Jan 2016: bugfix [thanks, @lehrblogger]
+
+14 Feb 2016: optional setting to remove labels on error [thanks, @lehrblogger]
+
 ## To do list:
 
 * (Figure out how to) Bundle the script as a [web app](https://developers.google.com/apps-script/execution_web_apps) that others can add easily.
