@@ -12,12 +12,13 @@
 /*
  * 1: SET UP config options 
  */
-var EMAIL_PREFIX   = "USERNAME+tickler"; // where USERNAME@gmail.com is your regular address
-var TICKLER_LABEL  = "tickler";          
-var FINISH_LABEL   = "tickler/finished"; // label name, or `false`
-var ERROR_LABEL    = "tickler/error";    // label name, or `false`
-var MARK_UNREAD    = true;               // mark unread when restoring a message to the inbox
-var EMAIL_ERRORS   = true;               // report error message as email reply within thread
+var EMAIL_PREFIX     = "USERNAME+tickler"; // where USERNAME@gmail.com is your regular address
+var TICKLER_LABEL    = "tickler";
+var FINISH_LABEL     = "tickler/finished"; // label name, or `false`
+var ERROR_LABEL      = "tickler/error";    // label name, or `false`
+var REMOVE_CONFLICTS = false;              // remove conflicting labels when an error is encountered
+var MARK_UNREAD      = true;               // mark unread when restoring a message to the inbox
+var EMAIL_ERRORS     = true;               // report error message as email reply within thread
 
 var CLEANUP_LABELS = true;               // remove empty tickler-command labels
 var EXEMPT_LABELS  =                     // labels to have around even if empty
@@ -346,8 +347,15 @@ function errorThread(t, info) {
 
     if (DRY_RUN) return;
 
-    t.moveToInbox();
+    if (REMOVE_CONFLICTS) {
+        var labels = getTicklerCmdLabels(t);
+        for (var i=0; i<labels.length; i++) {
+            t.removeLabel(labels[i]);
+        }
+    }
+
     GmailApp.getUserLabelByName(TICKLER_LABEL).removeFromThread(t);
+    t.moveToInbox();
 
     if (info.msg && EMAIL_ERRORS) {
         var err;
