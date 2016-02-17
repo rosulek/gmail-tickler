@@ -68,6 +68,9 @@ function processThreads() {
     for (var i = 0; i < threads.length; i++) {
         var info = ticklerInfo(threads[i]);
 
+        if (! info)
+            continue;
+
         if (! info.target || ! info.target['getTime']) {
             errorThread(threads[i], info);
             continue;
@@ -123,6 +126,10 @@ function getTicklerCmdLabels(t) {
 
 function ticklerInfo(t) {
     var msgs = t.getMessages();
+    if (!msgs) {
+        Logger.log("no messages found in thread `" + t.getFirstMessageSubject() + "`");
+        return false;
+    }
     var result = { baseline: msgs[msgs.length-1].getDate() };
 
     Logger.log("extracting info from thread `" + t.getFirstMessageSubject() + "`");
