@@ -242,8 +242,9 @@ function parseDate(s, baseline) {
             s = s.substr(matches[0].length);
         }
 
-        matches = s.match(/^(?:on\s*)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*(\d+)/i);
+        matches = s.match(/^(?:on\s*)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*(\d+)\,?\s*(\d{4})?/i);
         if (matches) {
+            var year = parseInt(matches[3], 10)
             var mon = MONTHS[ matches[1].substr(0,3).toLowerCase() ];
             var day = parseInt(matches[2], 10)
 
@@ -252,8 +253,11 @@ function parseDate(s, baseline) {
                 break;
             }
             dateReason = matches[0];
-            ifPast = "y";
 
+            if (isNaN(year))
+                ifPast = "y";
+            else
+                theDate.setFullYear(year);
             theDate.setMonth(mon);
             theDate.setDate(day);
 
