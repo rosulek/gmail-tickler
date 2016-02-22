@@ -63,10 +63,10 @@ function processThreads() {
 
     Logger.log("processing " + threads.length + " threads in all");
 
-    var now  = new Date();
-    now.setMinutes( now.getMinutes() + FUDGE_FACTOR );
+    var now = new Date();
+    var now_fudged = new Date(now.getTime() + (FUDGE_FACTOR * 60 * 1000));
     for (var i = 0; i < threads.length; i++) {
-        var info = ticklerInfo(threads[i]);
+        var info = ticklerInfo(threads[i], now);
 
         if (! info.target || ! info.target['getTime']) {
             errorThread(threads[i], info);
@@ -75,8 +75,10 @@ function processThreads() {
 
         Logger.log("thread target time is " + info.target);
 
-        if (now.getTime() >= info.target.getTime())
+        if (now_fudged.getTime() >= info.target.getTime())
             untickleThread(threads[i]);
+        else
+            convertCmdLabels(threads[i], info.target);
     }
 
     if (CLEANUP_LABELS) cleanupLabels();
@@ -121,9 +123,9 @@ function getTicklerCmdLabels(t) {
     return t.getLabels().filter( function(lbl) { return isTicklerCmd(lbl) } );
 }
 
-function ticklerInfo(t) {
+function ticklerInfo(t, now) {
     var msgs = t.getMessages();
-    var result = { baseline: msgs[msgs.length-1].getDate() };
+    var result = {};
 
     Logger.log("extracting info from thread `" + t.getFirstMessageSubject() + "`");
 
@@ -137,7 +139,6 @@ function ticklerInfo(t) {
             var match  = suffix.match(/^[^@]+/);
             if (match) {
                 result.command = match[0].replace(/\.|\+/g, " ");
-                result.baseline = m.getDate();
                 Logger.log("message #" + (i+1) + " of thread contains tickler command: `" + result.command + "`");
             }
             break;
@@ -159,7 +160,7 @@ function ticklerInfo(t) {
     }
 
     if (result.command)
-        result.target = parseDate(result.command, result.baseline);
+        result.target = parseDate(result.command, now);
     else
         Logger.log("no tickler command found");
 
@@ -326,13 +327,26 @@ function untickleThread(t) {
     if (FINISH_LABEL)
         GmailApp.getUserLabelByName(FINISH_LABEL).addToThread(t);
 
-    var labels = getTicklerCmdLabels(t);
-    for (var i=0; i<labels.length; i++) {
-        t.removeLabel(labels[i]);
-    }
+    removeCmdLabelsFromThread(t);
 
     GmailApp.getUserLabelByName(TICKLER_LABEL).removeFromThread(t);
     t.moveToInbox();
+}
+
+function convertCmdLabels(t, theDate) {
+    var cmd;
+    if (theDate.getMinutes() > 0)
+        cmd = Utilities.formatDate(theDate, Session.getScriptTimeZone(), "h:mmaaa' on 'MMM dd, yyyy");
+    else
+        cmd = Utilities.formatDate(theDate, Session.getScriptTimeZone(), "haaa' on 'MMM dd, yyyy");
+
+    Logger.log("converting labels to `" + cmd + "` for thread `" + t.getFirstMessageSubject() + "`");
+    var label = TICKLER_LABEL + "/" + cmd;
+
+    removeCmdLabelsFromThread(t);
+
+    GmailApp.createLabel(label);
+    GmailApp.getUserLabelByName(label).addToThread(t);
 }
 
 function cleanupLabels() {
@@ -352,10 +366,7 @@ function errorThread(t, info) {
     if (DRY_RUN) return;
 
     if (REMOVE_CONFLICTS) {
-        var labels = getTicklerCmdLabels(t);
-        for (var i=0; i<labels.length; i++) {
-            t.removeLabel(labels[i]);
-        }
+        removeCmdLabelsFromThread(t);
     }
 
     GmailApp.getUserLabelByName(TICKLER_LABEL).removeFromThread(t);
@@ -379,3 +390,9 @@ function errorThread(t, info) {
 
 }
 
+function removeCmdLabelsFromThread(t) {
+    var labels = getTicklerCmdLabels(t);
+    for (var i=0; i<labels.length; i++) {
+        t.removeLabel(labels[i]);
+    }
+}
