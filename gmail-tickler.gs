@@ -264,7 +264,7 @@ function parseDate(s, baseline) {
             s = s.substr(matches[0].length);
         }
 
-        matches = s.match(/^(?:at\s*)?(noon|midnight|([1-9]|1[012])(?:([0-5]\d))?([ap]m?)|([01]?\d|2[0-3])([0-5]\d)(?![apAP0-9]))/i);
+        matches = s.match(/^(?:at\s*)?(noon|midnight|([1-9]|1[012])\:?(?:([0-5]\d))?([ap]m?)|([01]?\d|2[0-3])\:?([0-5]\d)(?![apAP0-9]))/i);
         if (matches) {
             if (timeReason) {
                 conflicts = [timeReason, matches[0]];
