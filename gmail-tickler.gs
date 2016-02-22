@@ -25,7 +25,7 @@ var EXEMPT_LABELS  =                     // labels to have around even if empty
     [ "tomorrow", "sun", "mon", "tue",
       "wed", "thu", "fri", "sat",
       "1wk", "2wks"
-    ].map( function(x){ return TICKLER_LABEL + "/" + x });
+    ].map( function(x){ return TICKLER_LABEL + "/ " + x });
 
 
 var DEFAULT_TIME   = [8, 0, 0, 0];       // for dates that don't specify a time-of-day,
@@ -178,6 +178,7 @@ function parseDate(s, baseline) {
 
     Logger.log("parsing tickler command `" + s + "` with baseline = " + baseline);
 
+    s = s.trim();  // to account for the prefix on exempt labels
     var charsRemain = s.length + 1;
     while (charsRemain && charsRemain != s.length) {
         charsRemain = s.length;
@@ -340,6 +341,7 @@ function convertCmdLabels(t, theDate) {
     else
         cmd = Utilities.formatDate(theDate, Session.getScriptTimeZone(), "haaa' on 'MMM dd, yyyy");
 
+    cmd = cmd.toLowerCase();
     Logger.log("converting labels to `" + cmd + "` for thread `" + t.getFirstMessageSubject() + "`");
     var label = TICKLER_LABEL + "/" + cmd;
 
