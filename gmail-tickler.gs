@@ -287,6 +287,7 @@ function parseDate(s, baseline) {
                 minute = parseInt(matches[6], 10);
             }   
             
+            ifPast = "d";
             theDate.setHours(hour, minute, 0, 0);
             s = s.substr(matches[0].length);
             continue;
@@ -310,6 +311,8 @@ function parseDate(s, baseline) {
             theDate.setFullYear( theDate.getFullYear() + 1);
         else if (ifPast == "w")
             theDate.setDate( theDate.getDate() + 7 );
+        else if (ifPast == "d")
+            theDate.setDate( theDate.getDate() + 1 );
         else
             return "illegal date in past";
     }
