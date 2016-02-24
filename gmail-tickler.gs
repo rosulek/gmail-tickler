@@ -77,7 +77,7 @@ function processThreads() {
 
         if (now_fudged.getTime() >= info.target.getTime())
             untickleThread(threads[i]);
-        else
+        else if (info.needsConversion)
             convertCmdLabels(threads[i], info.target);
     }
 
@@ -123,6 +123,13 @@ function getTicklerCmdLabels(t) {
     return t.getLabels().filter( function(lbl) { return isTicklerCmd(lbl) } );
 }
 
+function formatDate(theDate) {
+    if (theDate.getMinutes() > 0)
+        return Utilities.formatDate(theDate, Session.getScriptTimeZone(), "h:mmaaa' on 'MMM dd, yyyy").toLowerCase();
+    else
+        return Utilities.formatDate(theDate, Session.getScriptTimeZone(), "haaa' on 'MMM dd, yyyy").toLowerCase();
+}
+
 function ticklerInfo(t, now) {
     var msgs = t.getMessages();
     var result = {};
@@ -148,21 +155,39 @@ function ticklerInfo(t, now) {
     // tickler command from labels
 
     var labels = getTicklerCmdLabels(t);
+    var cmds = [];
     for (var i = 0; i<labels.length; i++) {
         var cmd = labels[i].getName().substr( TICKLER_LABEL.length + 1 ); // +1 for trailing slash
-        cmd = cmd.replace(/\/|\./g, " ");
+        cmds.push(cmd.replace(/\/|\./g, " "));
+        Logger.log("thread also contains label " + labels[i].getName() + " with command " + cmds[i]);
+    }
+    for (var i = 0; i<cmds.length; i++) {
         if (! result.command) {
-            result.command = cmd;
+            result.command = cmds[i];
         } else {
-            result.command += " " + cmd;
+            result.command += " " + cmds[i];
         }
-        Logger.log("thread also contains label " + labels[i].getName() + " with command " + cmd);
     }
 
-    if (result.command)
+    if (result.command) {
         result.target = parseDate(result.command, now);
-    else
-        Logger.log("no tickler command found");
+
+        // if we have a date, loop through again to see if we had the right fully-specified label already
+        // (do this here, since we've already fetched the thread's labels and don't want to do it again)
+        if (result.target["getTime"]) {
+            result.needsConversion = true;
+            for (var i = 0; i<cmds.length; i++) {
+                if (formatDate(result.target) == cmds[i]) {
+                    result.needsConversion = false;
+                    Logger.log("no conversion needed for `" + cmds[i] + "`");
+                    break;
+                }
+            }
+        }
+
+    } else {
+        Logger.log("no tickler commentand found");
+    }
 
     return result;
 }
@@ -338,15 +363,9 @@ function untickleThread(t) {
 }
 
 function convertCmdLabels(t, theDate) {
-    var cmd;
-    if (theDate.getMinutes() > 0)
-        cmd = Utilities.formatDate(theDate, Session.getScriptTimeZone(), "h:mmaaa' on 'MMM dd, yyyy");
-    else
-        cmd = Utilities.formatDate(theDate, Session.getScriptTimeZone(), "haaa' on 'MMM dd, yyyy");
-
-    cmd = cmd.toLowerCase();
-    Logger.log("converting labels to `" + cmd + "` for thread `" + t.getFirstMessageSubject() + "`");
+    var cmd = formatDate(theDate);
     var label = TICKLER_LABEL + "/" + cmd;
+    Logger.log("converting labels to `" + cmd + "` for thread `" + t.getFirstMessageSubject() + "`");
 
     removeCmdLabelsFromThread(t);
 
