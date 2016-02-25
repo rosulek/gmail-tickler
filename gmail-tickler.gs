@@ -25,7 +25,7 @@ var EXEMPT_LABELS  =                     // labels to have around even if empty
     [ "tomorrow", "sun", "mon", "tue",
       "wed", "thu", "fri", "sat",
       "1wk", "2wks"
-    ].map( function(x){ return TICKLER_LABEL + "/" + x });
+    ].map( function(x){ return TICKLER_LABEL + "/ " + x });
 
 
 var DEFAULT_TIME   = [8, 0, 0, 0];       // for dates that don't specify a time-of-day,
@@ -63,10 +63,10 @@ function processThreads() {
 
     Logger.log("processing " + threads.length + " threads in all");
 
-    var now  = new Date();
-    now.setMinutes( now.getMinutes() + FUDGE_FACTOR );
+    var now = new Date();
+    var now_fudged = new Date(now.getTime() + (FUDGE_FACTOR * 60 * 1000));
     for (var i = 0; i < threads.length; i++) {
-        var info = ticklerInfo(threads[i]);
+        var info = ticklerInfo(threads[i], now);
 
         if (! info.target || ! info.target['getTime']) {
             errorThread(threads[i], info);
@@ -75,8 +75,10 @@ function processThreads() {
 
         Logger.log("thread target time is " + info.target);
 
-        if (now.getTime() >= info.target.getTime())
+        if (now_fudged.getTime() >= info.target.getTime())
             untickleThread(threads[i]);
+        else if (info.needsConversion)
+            convertCmdLabels(threads[i], info.target);
     }
 
     if (CLEANUP_LABELS) cleanupLabels();
@@ -121,9 +123,16 @@ function getTicklerCmdLabels(t) {
     return t.getLabels().filter( function(lbl) { return isTicklerCmd(lbl) } );
 }
 
-function ticklerInfo(t) {
+function formatDate(theDate) {
+    if (theDate.getMinutes() > 0)
+        return Utilities.formatDate(theDate, Session.getScriptTimeZone(), "h:mmaaa' on 'MMM dd, yyyy").toLowerCase();
+    else
+        return Utilities.formatDate(theDate, Session.getScriptTimeZone(), "haaa' on 'MMM dd, yyyy").toLowerCase();
+}
+
+function ticklerInfo(t, now) {
     var msgs = t.getMessages();
-    var result = { baseline: msgs[msgs.length-1].getDate() };
+    var result = {};
 
     Logger.log("extracting info from thread `" + t.getFirstMessageSubject() + "`");
 
@@ -137,7 +146,6 @@ function ticklerInfo(t) {
             var match  = suffix.match(/^[^@]+/);
             if (match) {
                 result.command = match[0].replace(/\.|\+/g, " ");
-                result.baseline = m.getDate();
                 Logger.log("message #" + (i+1) + " of thread contains tickler command: `" + result.command + "`");
             }
             break;
@@ -147,21 +155,39 @@ function ticklerInfo(t) {
     // tickler command from labels
 
     var labels = getTicklerCmdLabels(t);
+    var cmds = [];
     for (var i = 0; i<labels.length; i++) {
         var cmd = labels[i].getName().substr( TICKLER_LABEL.length + 1 ); // +1 for trailing slash
-        cmd = cmd.replace(/\/|\./g, " ");
+        cmds.push(cmd.replace(/\/|\./g, " "));
+        Logger.log("thread also contains label " + labels[i].getName() + " with command " + cmds[i]);
+    }
+    for (var i = 0; i<cmds.length; i++) {
         if (! result.command) {
-            result.command = cmd;
+            result.command = cmds[i];
         } else {
-            result.command += " " + cmd;
+            result.command += " " + cmds[i];
         }
-        Logger.log("thread also contains label " + labels[i].getName() + " with command " + cmd);
     }
 
-    if (result.command)
-        result.target = parseDate(result.command, result.baseline);
-    else
-        Logger.log("no tickler command found");
+    if (result.command) {
+        result.target = parseDate(result.command, now);
+
+        // if we have a date, loop through again to see if we had the right fully-specified label already
+        // (do this here, since we've already fetched the thread's labels and don't want to do it again)
+        if (result.target["getTime"]) {
+            result.needsConversion = true;
+            for (var i = 0; i<cmds.length; i++) {
+                if (formatDate(result.target) == cmds[i]) {
+                    result.needsConversion = false;
+                    Logger.log("no conversion needed for `" + cmds[i] + "`");
+                    break;
+                }
+            }
+        }
+
+    } else {
+        Logger.log("no tickler commentand found");
+    }
 
     return result;
 }
@@ -177,6 +203,7 @@ function parseDate(s, baseline) {
 
     Logger.log("parsing tickler command `" + s + "` with baseline = " + baseline);
 
+    s = s.trim();  // to account for the prefix on exempt labels
     var charsRemain = s.length + 1;
     while (charsRemain && charsRemain != s.length) {
         charsRemain = s.length;
@@ -242,8 +269,9 @@ function parseDate(s, baseline) {
             s = s.substr(matches[0].length);
         }
 
-        matches = s.match(/^(?:on\s*)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*(\d+)/i);
+        matches = s.match(/^(?:on\s*)?(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*(\d+)\,?\s*(\d{4})?/i);
         if (matches) {
+            var year = parseInt(matches[3], 10)
             var mon = MONTHS[ matches[1].substr(0,3).toLowerCase() ];
             var day = parseInt(matches[2], 10)
 
@@ -252,15 +280,18 @@ function parseDate(s, baseline) {
                 break;
             }
             dateReason = matches[0];
-            ifPast = "y";
 
+            if (isNaN(year))
+                ifPast = "y";
+            else
+                theDate.setFullYear(year);
             theDate.setMonth(mon);
             theDate.setDate(day);
 
             s = s.substr(matches[0].length);
         }
 
-        matches = s.match(/^(?:at\s*)?(noon|midnight|([1-9]|1[012])(?:([0-5]\d))?([ap]m?)|([01]?\d|2[0-3])([0-5]\d)(?![apAP0-9]))/i);
+        matches = s.match(/^(?:at\s*)?(noon|midnight|([1-9]|1[012])\:?(?:([0-5]\d))?([ap]m?)|([01]?\d|2[0-3])\:?([0-5]\d)(?![apAP0-9]))/i);
         if (matches) {
             if (timeReason) {
                 conflicts = [timeReason, matches[0]];
@@ -281,6 +312,7 @@ function parseDate(s, baseline) {
                 minute = parseInt(matches[6], 10);
             }   
             
+            ifPast = "d";
             theDate.setHours(hour, minute, 0, 0);
             s = s.substr(matches[0].length);
             continue;
@@ -304,6 +336,8 @@ function parseDate(s, baseline) {
             theDate.setFullYear( theDate.getFullYear() + 1);
         else if (ifPast == "w")
             theDate.setDate( theDate.getDate() + 7 );
+        else if (ifPast == "d")
+            theDate.setDate( theDate.getDate() + 1 );
         else
             return "illegal date in past";
     }
@@ -322,13 +356,21 @@ function untickleThread(t) {
     if (FINISH_LABEL)
         GmailApp.getUserLabelByName(FINISH_LABEL).addToThread(t);
 
-    var labels = getTicklerCmdLabels(t);
-    for (var i=0; i<labels.length; i++) {
-        t.removeLabel(labels[i]);
-    }
+    removeCmdLabelsFromThread(t);
 
     GmailApp.getUserLabelByName(TICKLER_LABEL).removeFromThread(t);
     t.moveToInbox();
+}
+
+function convertCmdLabels(t, theDate) {
+    var cmd = formatDate(theDate);
+    var label = TICKLER_LABEL + "/" + cmd;
+    Logger.log("converting labels to `" + cmd + "` for thread `" + t.getFirstMessageSubject() + "`");
+
+    removeCmdLabelsFromThread(t);
+
+    GmailApp.createLabel(label);
+    GmailApp.getUserLabelByName(label).addToThread(t);
 }
 
 function cleanupLabels() {
@@ -348,10 +390,7 @@ function errorThread(t, info) {
     if (DRY_RUN) return;
 
     if (REMOVE_CONFLICTS) {
-        var labels = getTicklerCmdLabels(t);
-        for (var i=0; i<labels.length; i++) {
-            t.removeLabel(labels[i]);
-        }
+        removeCmdLabelsFromThread(t);
     }
 
     GmailApp.getUserLabelByName(TICKLER_LABEL).removeFromThread(t);
@@ -375,3 +414,9 @@ function errorThread(t, info) {
 
 }
 
+function removeCmdLabelsFromThread(t) {
+    var labels = getTicklerCmdLabels(t);
+    for (var i=0; i<labels.length; i++) {
+        t.removeLabel(labels[i]);
+    }
+}
