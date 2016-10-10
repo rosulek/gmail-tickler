@@ -39,6 +39,12 @@ var RESTORE = {
     fudge_factor:       15      // restore if within this many minutes of deadline
 };
 
+// when a tickle command is sent as part of the email address
+var EMAIL = {
+    label:              BASE_LABEL + '/email',    // look for such emails in this label
+    address_prefix:     'mikero+tickler',         
+};
+
 var ERROR = {
     apply_label:        BASE_LABEL + '/error',
     keep_label:         true,
@@ -59,6 +65,8 @@ function setup() {
         GmailApp.createLabel(RESTORE.apply_label);
     if (ERROR.apply_label)
         GmailApp.createLabel(ERROR.apply_label);
+    if (EMAIL.label)
+        GmailApp.createLabel(EMAIL.label);
 
     for (var i=0; i<TICKLE.cleanup_exempt.length; i++) {
         GmailApp.createLabel(TICKLE.cleanup_exempt[i]);
@@ -81,6 +89,7 @@ function ticklerMain() {
 
         if (action == "tickle")  tickleLabel(lbl);
         if (action == "restore") restoreLabel(lbl);
+        if (action == "email")   emailTickleLabel(lbl);
     }
 }
 
@@ -89,9 +98,11 @@ function ticklerMain() {
 
 function labelAction(lbl) {
     var name = lbl.getName();
-    if ( name.indexOf(BASE_LABEL + "/") != 0 ) return "ignore";     // not in the tickler tree
+    if ( name.indexOf(BASE_LABEL + "/") != 0 ) return "ignore";  // not in the tickler tree
     if ( name == ERROR.apply_label ) return "ignore";            // 'error' label
+    if ( name == EMAIL.label ) return "email";
     if ( name == RESTORE.apply_label ) return "ignore";          // 'finished' label
+    if ( name == TICKLE.label_prefix ) return "ignore";          // internal tickler catch-all
     if ( name.indexOf(TICKLE.label_prefix) == 0 ) return "restore";    // internal tickler
     return "tickle";
 }
@@ -135,6 +146,57 @@ function tickleLabel(lbl) {
     }
 }
 
+function emailTickleLabel(lbl) {
+    var threads = lbl.getThreads();
+    Logger.log("emailTickleLabel: label " + lbl.getName() + " has " + threads.length + " threads");
+    
+    if (! threads.length) return;
+ 
+    for (var i=0; i<threads.length; i++) {
+        var info = extractEmailTickleInfo(threads[i]);
+        info.command = info.command.replace(/\+|\./g, " ");
+
+        var target = parseTicklerCommand(info.command, info.baseline);
+        if (! target['getTime']) {
+            errorLabel(lbl, target);
+
+        } else {
+            var newlblname = TICKLE.label_prefix + "/" + date2str(target);
+            Logger.log("emailTickleLabel: moving thread to label " + newlblname);
+
+            if (DRY_RUN) return;
+
+            var newlbl = GmailApp.createLabel(newlblname);
+            threads[i].addLabel(newlbl);
+            threads[i].removeLabel(lbl);
+        }
+    }
+}
+
+function extractEmailTickleInfo(t) {
+    var msgs = t.getMessages();
+    var result = { baseline: new Date() };
+
+    Logger.log("extractEmailTickleInfo: extracting info from thread `" + t.getFirstMessageSubject() + "`");
+    
+    for (var i = msgs.length - 1; i >= 0; i--) {
+        var m = msgs[i];
+        var recpts = m.getTo() + "," + m.getCc() + "," + m.getBcc();
+        if (recpts.indexOf( EMAIL.address_prefix ) >= 0) {
+            var suffix = recpts.substr( recpts.indexOf(EMAIL.address_prefix) + EMAIL.address_prefix.length );
+            var match  = suffix.match(/^[^@]+/);
+            if (match) {
+                result.command = match[0].replace(/\.|\+/g, " ");
+                result.baseline = m.getDate();
+                Logger.log("extractEmailTickleInfo: message #" + (i+1) + " of thread contains tickler command: `" + result.command + "`");
+            }
+            break;
+        }
+    }
+  
+    return result;
+}
+      
 
 function restoreLabel(lbl) {
     // TICKLE.label guaranteed to be prefix of lbl.getName(); +1 is for trailing slash
@@ -146,13 +208,13 @@ function restoreLabel(lbl) {
     }
     Logger.log("restoreLabel: interpreting " + datestr + " as " + target);
 
+    var threads = lbl.getThreads();
+
     var now = new Date();
     now.setMinutes( now.getMinutes() + RESTORE.fudge_factor );
-
+ 
     if (now.getTime() >= target.getTime()) {
-        var threads = lbl.getThreads();
         Logger.log("restoreLabel: restoring " + threads.length + " threads");
-
         if (DRY_RUN) return;
 
         for (var i=0; i<threads.length; i++) {
@@ -161,6 +223,10 @@ function restoreLabel(lbl) {
             if (RESTORE.move_to_inbox) threads[i].moveToInbox();
         }
         lbl.deleteLabel();
+    
+    } else if (threads.length == 0) {
+       Logger.log("restoreLabel: cleaning up empty label");
+       if (!DRY_RUN) lbl.deleteLabel(); 
     }
     
 }
@@ -353,7 +419,7 @@ function parseTicklerCommand(s, baseline) {
       
         theDate.setHours( parseInt(m[1], 10), parseInt(m[2], 10), 0, 0);
     }
-    
+
     if (theDate.getTime() < baseline.getTime()) {
         if (ifPast == "y")
             theDate.setFullYear( theDate.getFullYear() + 1);
@@ -364,7 +430,6 @@ function parseTicklerCommand(s, baseline) {
         else
             return "illegal date in past";
     }
-
 
     return theDate;
 }
