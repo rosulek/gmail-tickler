@@ -2,7 +2,7 @@
 
 
 <p>
-    Send an email to username+tickler+<input id="s" value="tomorrow" style="width:200px">@gmail.com
+    Apply label tickler/<input id="s" value="tomorrow" style="width:200px">
 </p>
 
 <p>
@@ -29,7 +29,7 @@ function parseDate(s, baseline) {
     var theDate = new Date(baseline.getTime()); // clone
     var timeReason, dateReason, ifPast, conflicts;
 
-    s = s.replace(/\+|\./g, " ");
+    s = s.replace(/\/|\+|\./g, " ");
 
     console.log("----");
 
@@ -147,13 +147,15 @@ function parseDate(s, baseline) {
             continue;
         }
 
-        matches = s.match(/^(?:at\s*)?(noon|midnight|([1-9]|1[012])(?:([0-5]\d))?([ap]m?)|([01]?\d|2[0-3])([0-5]\d)(?![apAP0-9]))/i);
+        matches = s.match(/^(?:at\s*)?(noon|midnight|([1-9]|1[012])(?::?([0-5]\d))?([ap]m?)|([01]?\d|2[0-3])(?::?([0-5]\d))(?![apAP0-9]))/i);
         if (matches) {
             if (timeReason) {
                 conflicts = [timeReason, matches[0]];
                 break;
             }
             timeReason = matches[0];
+
+            if (!ifPast) ifPast = "d";
 
             var hour;
             if (matches[1].toLowerCase() == "noon") {
@@ -179,7 +181,6 @@ function parseDate(s, baseline) {
             s = s.substr(matches[0].length);
             continue;
         }
-
     }
 
     if (conflicts)
@@ -199,6 +200,8 @@ function parseDate(s, baseline) {
             theDate.setFullYear( theDate.getFullYear() + 1);
         else if (ifPast == "w")
             theDate.setDate( theDate.getDate() + 7 );
+        else if (ifPast == "d")
+            theDate.setDate( theDate.getDate() + 1 );
         else
             return "illegal date in past";
     }
@@ -217,7 +220,7 @@ $("#s").on("keyup",
     }
 );
 
-var EXAMPLES = ["2days", "next+monday+235pm", "jul+17+1400", "tomorrow+at.5pm", "in.4.weeks", "noon+on+tuesday"];
+var EXAMPLES = ["2days", "next monday 235pm", "jul17 14:00", "tomorrow at.5pm", "in.4.weeks", "noon/on.tuesday"];
 
 for (var i=0; i<EXAMPLES.length; i++) {
     $("#examples").append("<li><a href='#'>" + EXAMPLES[i] + "</a></li>");
