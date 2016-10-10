@@ -21,7 +21,7 @@ var TICKLE = {
     archive:            true,
     mark_unread:        true,
     label_prefix:       BASE_LABEL + '/@',
-    default_time:       [8,0,0,0],  // [hh,mm,ss,millis]
+    default_time:       "8:00", // hh:mm, 24-hour format
 
     cleanup_labels:     true,   // remove the label containing the initial tickle-command
     cleanup_exempt:             // ... unless it's one of these:
@@ -347,9 +347,13 @@ function parseTicklerCommand(s, baseline) {
         return "unrecognized: `" + s + "`";
     }
 
-    if (! timeReason)
-        theDate.setHours.apply(theDate, TICKLE.default_time);
-
+    if (! timeReason) {
+        var m = TICKLE.default_time.match(/^(\d\d?):(\d\d)$/);
+        if (!m) return "default time " + TICKLE.default_time + " invalid";
+      
+        theDate.setHours( parseInt(m[1], 10), parseInt(m[2], 10), 0, 0);
+    }
+    
     if (theDate.getTime() < baseline.getTime()) {
         if (ifPast == "y")
             theDate.setFullYear( theDate.getFullYear() + 1);
