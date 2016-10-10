@@ -348,7 +348,7 @@ function parseTicklerCommand(s, baseline) {
     }
 
     if (! timeReason)
-        theDate.setHours.apply(theDate, DEFAULT_TIME);
+        theDate.setHours.apply(theDate, TICKLE.default_time);
 
     if (theDate.getTime() < baseline.getTime()) {
         if (ifPast == "y")
