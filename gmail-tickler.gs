@@ -295,10 +295,11 @@ function parseTicklerCommand(s, baseline) {
         charsRemain = s.length;
         s = s.replace(/^\s*/, "");
 
-        matches = s.match(/^(?:in\s*)?(\d+)\s*(h(?:(?:ou)?r)?s?|w(?:(?:ee)?k)?s?|mon(?:th)?s?|d(?:ay)?s?|y(?:(?:ea)?r)?s?)/i);
+        matches = s.match(/^(?:in\s*)?(\d+)\s*(min(?:ute)?s?|h(?:(?:ou)?r)?s?|w(?:(?:ee)?k)?s?|mon(?:th)?s?|d(?:ay)?s?|y(?:(?:ea)?r)?s?)/i);
         if (matches) {
-            var unit = matches[2].substr(0,1).toLowerCase();
-            var amount = parseInt(matches[1], 10);
+            var shortunit = matches[2].substr(0,1).toLowerCase();
+            var fullunit  = matches[2].substr(0,3).toLowerCase();
+            var amount    = parseInt(matches[1], 10);
 
             if (dateReason) {
                 conflicts = [dateReason, matches[0]];
@@ -306,7 +307,15 @@ function parseTicklerCommand(s, baseline) {
             }
             dateReason = matches[0];
 
-            if (unit == "h") {
+            if (fullunit == "min") {
+                if (timeReason) {
+                    conflicts = [timeReason, matches[0]];
+                    break;
+                }
+                timeReason = matches[0];
+
+                theDate.setMinutes( theDate.getMinutes() + amount );
+            } else if (shortunit == "h") {
                 if (timeReason) {
                     conflicts = [timeReason, matches[0]];
                     break;
@@ -314,13 +323,13 @@ function parseTicklerCommand(s, baseline) {
                 timeReason = matches[0];
 
                 theDate.setHours( theDate.getHours() + amount );
-            } else if (unit == "d") {
+            } else if (shortunit == "d") {
                 theDate.setDate( theDate.getDate() + amount );
-            } else if (unit == "w") {
+            } else if (shortunit == "w") {
                 theDate.setDate( theDate.getDate() + 7 * amount );
-            } else if (unit == "m") {
+            } else if (fullunit == "mon") {
                 theDate.setMonth( theDate.getMonth() + amount );
-            } else if (unit == "y") {
+            } else if (shortunit == "y") {
                 theDate.setFullYear( theDate.getFullYear() + amount );
             }
 
