@@ -14,7 +14,7 @@
 /*
  * 1: SET UP config options 
  */
-var BASE_LABEL = "#/tickler";
+var BASE_LABEL = "tickler";
 
 // when a tickle-command label is added to a thread:
 var TICKLE = {
@@ -33,7 +33,7 @@ var TICKLE = {
 
 // when the deadline for a tickled thread is reached:
 var RESTORE = {
-    apply_label:        BASE_LABEL + '/restored',
+    apply_label:        BASE_LABEL + '/restored',   // or false
     mark_unread:        true,
     move_to_inbox:      true,
     fudge_factor:       15      // restore if within this many minutes of deadline
@@ -42,11 +42,11 @@ var RESTORE = {
 // when a tickle command is sent as part of the email address
 var EMAIL = {
     label:              BASE_LABEL + '/email',    // look for such emails in this label
-    address_prefix:     'mikero+tickler',         
+    address_prefix:     'yourname+tickler',       // for yourname@gmail.com
 };
 
 var ERROR = {
-    apply_label:        BASE_LABEL + '/error',
+    apply_label:        BASE_LABEL + '/error',    // or false
     keep_label:         true,
     move_to_inbox:      true,
     mark_unread:        true
