@@ -25,7 +25,10 @@ Either way, the thread will reappear back in your inbox at the date+time you spe
 
 1. **Set up the script:**
     * Go to [script.google.com](https://script.google.com/), and create a new script, called "Tickler" or something.
-    * Paste in code from the `gmail-tickler.gs` file in this repository. At the top of the script you will find some options to configure. If you are using the tickle-by-email-address feature, you must configure your email address.
+    * Paste in code from the `gmail-tickler.gs` file in this repository. At the top of the script you will find some options to configure.
+        * If you are using the tickle-by-email-address feature, you must configure your email address.
+        * If you want to change the timestamp format, you can use the tokens described [here](http://momentjs.com/docs/#/parsing/string-format/), and you can escape characters by wrapping them in `[square brackets]`. Note that this format must fully-specify a date and time for the script to work properly. If you decide to change this timestamp in the future, you must either empty or re-name existing labels manually.
+    * Go to `File -> New -> Script file`, create a new file named `moment` and paste in code from the `moment.gs` file in this repository.
 
 2. **Set timezone:** To make sure the Tickler script runs in your native timezone, open the script editor in Google Apps, and go to the "File" menu, "Project properties." There you will find a timezone configuration.
 
