@@ -92,7 +92,7 @@ function processLabels(restoreOnly) {  // run a second time to restore just-tick
         var action = labelAction(lbl);
         if (action == "ignore") continue;
 
-        Logger.log("ticklerMain(restoreOnly=" + restoreOnly + "): label " + lbl.getName() + " ==> action = " + action);
+        Logger.log("processLabels(restoreOnly=" + restoreOnly + "): label " + lbl.getName() + " ==> action = " + action);
 
         if (action == "tickle" && !restoreOnly) tickleLabel(lbl);
         if (action == "restore")                restoreLabel(lbl);
