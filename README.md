@@ -138,6 +138,8 @@ Google developers wrote [Gmail Snooze](http://googleappsdeveloper.blogspot.com/2
 
 11 Oct 2016: intuitive handling of relative dates in labels [idea suggested by @lehrblogger], other refactorings
 
+27 Nov 2016: bugfix [thanks, @lehrblogger]
+
 ## To do list:
 
 * (Figure out how to) Bundle the script as a [web app](https://developers.google.com/apps-script/execution_web_apps) so installation is easy for everyone.
