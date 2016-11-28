@@ -78,23 +78,27 @@ function setup() {
  */
 function ticklerMain() {
     Logger.clear();
+    processLabels(false);
+    processLabels(true);
+}
 
+// don't go beyond this point! ... or do... I'm a code comment, not a cop.
+////////////////////////////////////////////////////////////////////////////
+
+function processLabels(restoreOnly) {  // run a second time to restore just-tickled threads
     var labels = GmailApp.getUserLabels();
     for (var i=0; i < labels.length; i++) {
         var lbl = labels[i];
         var action = labelAction(lbl);
         if (action == "ignore") continue;
 
-        Logger.log("ticklerMain: label " + lbl.getName() + " ==> action = " + action);
+        Logger.log("ticklerMain(restoreOnly=" + restoreOnly + "): label " + lbl.getName() + " ==> action = " + action);
 
-        if (action == "tickle")  tickleLabel(lbl);
-        if (action == "restore") restoreLabel(lbl);
-        if (action == "email")   emailTickleLabel(lbl);
+        if (action == "tickle" && !restoreOnly) tickleLabel(lbl);
+        if (action == "restore")                restoreLabel(lbl);
+        if (action == "email" && !restoreOnly)  emailTickleLabel(lbl);
     }
 }
-
-// don't go beyond this point! ... or do... I'm a code comment, not a cop.
-////////////////////////////////////////////////////////////////////////////
 
 function labelAction(lbl) {
     var name = lbl.getName();
