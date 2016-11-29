@@ -74,7 +74,9 @@ Some of these tickler commands specify a *relative* deadline, like `next friday`
 
 * If you've used label-based tickling, then the deadline is relative to the *first time the script runs after you apply the label*. The first time the script sees a thread with label `tickler/somedate/sometime`, it will replace that label with a fully-specified `tickler/@/*` label.
 
-You may find it useful to apply tickler labels can using Gmail's built-in filters to automatically snooze emails matching certain queries to a certain day/time. For example, you might automatically apply `tickler/6pm` (and skip the inbox) to certain emails so that you aren't bothered by them until the end of the work day.
+You may find it useful to apply Tickler labels using Gmail's built-in filters to automatically snooze emails matching a particular query to a certain day/time. For example, you might automatically apply `tickler/6pm` (and skip the inbox) to certain emails so that you aren't bothered by them until the end of the work day.
+
+A similar effect can be achieved for individual threads with Gmail's mute feature. You can mute a thread with the `m` keyboard shortcut or from the More dropdown menu, and that will prevent it from being returned to your inbox by future emails. Muting threads will save you the effort of moving the thread to a Tickler label each time a new email arrives, and the Tickler will still return these threads to your inbox at the appropriate time.
 
 ## Fine Print / Known Limitations:
 
