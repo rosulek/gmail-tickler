@@ -96,9 +96,11 @@ Threads will be restored to the inbox the first time the script runs **after the
 
 I encourage you to check out all of these and choose the one that's right for you. Here's my understanding of the major differences.
 
-#### Google Inbox:
+#### Core Google features:
 
-[Google Inbox](https://www.google.com/inbox/) has a "Snooze" feature built-in. This didn't exist when I originally wrote this script. Snooze certainly has the advantage of being an official feature. But as far as I can tell, the feature works only with the Inbox interface, not in the Gmail interface.
+When I originally wrote this script, there was no official Google support for any such feature. Since then, [Google Inbox](https://www.google.com/inbox/) introduced a built-in "Snooze" feature, followed by one in [Gmail itself](https://www.blog.google/products/g-suite/new-security-and-intelligent-features-new-gmail-means-business/). These certainly have the advantage of being an official feature.
+
+Speaking personally, I find my gmail-tickler to be easier to use in the sense that (1) the deadline can be typed on the keyboard, and (2) the deadline can be expressed in relative terms (e.g., "8 days from now"). Snoozing an email in Gmail/Inbox seems to require lots of clicking around, not to mention math (if you want to figure out what day is 25 days from now).
 
 #### Followup[then]:
 
