@@ -34,7 +34,7 @@ Either way, the thread will reappear back in your inbox at the date+time you spe
 
 4. **Set up a time-driven trigger** for processing of the Tickler file:
     * In the "resources" menu of the script editor, select "current project's triggers".
-    * Add a new trigger for the function called `processThreads`, to be time-driven whenever you like. I suggest an 15- or 30-minute trigger.
+    * Add a new trigger for the function called `ticklerMain`, to be time-driven whenever you like. I suggest an 15- or 30-minute trigger.
 
 5. **Add a Gmail filter** to get messages into the Tickler file, if you are using the tickle-by-email-address feature. You should add a filter for the search query `to:USERNAME+tickler from:me` (where `USERNAME` is your GMail ID), to bypass the inbox and assign the `tickler/email` label to messages. Yes, you can literally include `from:me` in the filter.
 
@@ -143,6 +143,8 @@ Google developers wrote [Gmail Snooze](http://googleappsdeveloper.blogspot.com/2
 11 Oct 2016: intuitive handling of relative dates in labels [idea suggested by @lehrblogger], other refactorings
 
 27 Nov 2016: bugfix [thanks, @lehrblogger]
+
+16 Jul 2020: fixed broken compatibility with getYear / getFullYear [thanks @Hamzehn]
 
 ## To do list:
 

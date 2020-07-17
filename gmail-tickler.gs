@@ -1,8 +1,8 @@
-/*
+*
  * Gmail Tickler, a Google Apps script
  * written by Mike Rosulek, rosulekm@eecs.oregonstate.edu
  *
- * Revision: 27 Nov 2016
+ * Revision: 16 Jul 2020
  *
  * Made available under the MIT license. See the license and instructions at:
  *
@@ -258,7 +258,7 @@ function twodigit (v) {
 
 function date2str (d) {
     var Y, M, D, h, m;
-    Y = d.getYear();
+    Y = d.getFullYear();
     M = twodigit( d.getMonth() + 1 );
     D = twodigit( d.getDate() );
     h = twodigit( d.getHours() );
