@@ -9,7 +9,7 @@ Made available under the MIT license.
 
 Get email threads out of your inbox until a time+date that you specify.
 
-The name "tickler" comes from "Getting Things Done" (GTD) terminology. A **tickler** is a collection of items that require action at some time in the future. The act of defering an email until a later time is called "tickling" the email.
+The name "Tickler" comes from "Getting Things Done" (GTD) terminology. A **tickler** is a collection of items that require action at some time in the future. The act of defering an email until a later time is called "tickling" the email.
 
 ## How To Use It
 
@@ -35,11 +35,11 @@ Either way, the thread will reappear back in your inbox at the date+time you spe
 3. **Create the labels:** In the toolbar on the script editor is a dropdown where you can select a function to be executed. Select the `setup` function and press the play button. This will add the appropriate labels to your gmail. 
     > *Note:* The first time you run the script, you'll have to authorize it to access your GMail. You may have to refresh GMail browser sessions to see the new labels, give them colors, etc.
 
-4. **Set up a time-driven trigger** for processing of the tickler file:
+4. **Set up a time-driven trigger** for processing of the Tickler file:
     * In the "resources" menu of the script editor, select "current project's triggers".
-    * Add a new trigger for the function called `processThreads`, to be time-driven whenever you like. I suggest an 15- or 30-minute trigger.
+    * Add a new trigger for the function called `ticklerMain`, to be time-driven whenever you like. I suggest an 15- or 30-minute trigger.
 
-5. **Add a Gmail filter** to get messages into the tickler file, if you are using the tickle-by-email-address feature. You should add a filter for the search query `to:USERNAME+tickler from:me` (where `USERNAME` is your GMail ID), to bypass the inbox and assign the `tickler/email` label to messages. Yes, you can literally include `from:me` in the filter.
+5. **Add a Gmail filter** to get messages into the Tickler file, if you are using the tickle-by-email-address feature. You should add a filter for the search query `to:USERNAME+tickler from:me` (where `USERNAME` is your GMail ID), to bypass the inbox and assign the `tickler/email` label to messages. Yes, you can literally include `from:me` in the filter.
 
 ## More Details: Tickler Syntax:
 
@@ -69,15 +69,17 @@ You can use the `test.html` file in this repository to play around with the date
 
 ## More Usage Notes:
 
-The first time the Gmail Tickler script finds an email to tickle, it computes the deadline date+time and moves the thread to a special label of the form `tickler/@/YYYY-MM-DD at HH:MM`. If you want to see what threads are currently in the tickler, you can check everything in the `tickler/@/*` tree of labels. Along these lines, you can cancel the tickler by removing this `tickler/@/*` label.
+The first time the Gmail Tickler script finds an email to tickle, it computes the deadline date+time and moves the thread to a special label of the form `tickler/@/YYYY-MM-DD at HH:MM`. If you want to see what threads are currently in the Tickler, you can check everything in the `tickler/@/*` tree of labels. Along these lines, you can cancel the Tickler by removing this `tickler/@/*` label.
 
-Some of these tickler commands specify a *relative* deadline, like `next friday`, `in 3 hours`. But relative to what? 
+Some of these Tickler commands specify a *relative* deadline, like `next friday`, `in 3 hours`. But relative to what?
 
-* If you've used email-address tickling, then the deadline is relative to the most recent message in the thread *for which `username+tickler+cmd@gmail.com` is a recipient*. So if other participants also follow up in the thread, the deadline won't be affected. However, the tickler doesn't *mute* the thread --- it will always reappear in the inbox when there is new activity.
+* If you've used email-address tickling, then the deadline is relative to the most recent message in the thread *for which `username+tickler+cmd@gmail.com` is a recipient*. So if other participants also follow up in the thread, the deadline won't be affected. However, the Tickler doesn't *mute* the thread --- it will always reappear in the inbox when there is new activity.
 
 * If you've used label-based tickling, then the deadline is relative to the *first time the script runs after you apply the label*. The first time the script sees a thread with label `tickler/somedate/sometime`, it will replace that label with a fully-specified `tickler/@/*` label.
 
-You may find it useful to apply tickler labels can using Gmail's built-in filters to automatically snooze emails matching certain queries to a certain day/time. For example, you might automatically apply `tickler/6pm` (and skip the inbox) to certain emails so that you aren't bothered by them until the end of the work day.
+You may find it useful to apply Tickler labels using Gmail's built-in filters to automatically snooze emails matching a particular query to a certain day/time. For example, you might automatically apply `tickler/6pm` (and skip the inbox) to certain emails so that you aren't bothered by them until the end of the work day.
+
+A similar effect can be achieved for individual threads with Gmail's mute feature, which is useful for noisy mailing lists. You can mute a thread in the Inbox with the `m` keyboard shortcut or from the More dropdown menu, and that will prevent it from being returned to your Inbox by future emails, unless those emails are sent directly to you. Muting threads will save you the effort of moving the thread to a Tickler label each time a new email arrives, and the Tickler will still return these threads to your inbox at the appropriate time.
 
 ## Fine Print / Known Limitations:
 
@@ -85,11 +87,11 @@ You may find it useful to apply tickler labels can using Gmail's built-in filter
 
 The script might not work correctly when you have lots (hundreds? thousands?) of emails under "Tickler management". Google Apps scripts are throttled in ways that are not entirely clear.
 
-The script can only restore emails to the inbox as frequently as the Google Apps time trigger runs the script. So if you trigger the tickler script to run every hour, don't expect the timing of restored emails to be more precise than one hour.
+The script can only restore emails to the inbox as frequently as the Google Apps time trigger runs the script. So if you trigger the Tickler script to run every hour, don't expect the timing of restored emails to be more precise than one hour.
 
 Threads will be restored to the inbox the first time the script runs **after the given date/time has passed.** So if you tickle an email until 11am Friday, and your processing script is triggered every hour, your email may not be restored until 11:59am Friday, or whenever the processing script happens to run. In general, if you have set up the processing script to trigger every N minutes, expect that emails might be restored to the inbox up to N minutes later than their given date/time.
 
-> Note: there is an option in the tickler script to "fudge" all times by a given amount. So if you set the fudge factor to 15 minutes, then an email designated for 2pm will be placed in your inbox even if the tickler script happens to run at 1:45pm. Still, the disclaimers above all apply to the "fudged" time.
+> Note: there is an option in the Tickler script to "fudge" all times by a given amount. So if you set the fudge factor to 15 minutes, then an email designated for 2pm will be placed in your inbox even if the Tickler script happens to run at 1:45pm. Still, the disclaimers above all apply to the "fudged" time.
 
 > A sensible usage of this fudge factor is to set it equal to the triggering interval. For example, set the fudge factor to 30 minutes, and trigger the processing script every 30 minutes. That way, tickling a thread to `2pm` means "restore this thread to the inbox by 2pm at the latest; i.e., sometime in the 30 minutes preceding 2pm."
 
@@ -97,9 +99,11 @@ Threads will be restored to the inbox the first time the script runs **after the
 
 I encourage you to check out all of these and choose the one that's right for you. Here's my understanding of the major differences.
 
-#### Google Inbox:
+#### Core Google features:
 
-[Google Inbox](https://www.google.com/inbox/) has a "Snooze" feature built-in. This didn't exist when I originally wrote this script. Snooze certainly has the advantage of being an official feature. But as far as I can tell, the feature works only with the Inbox interface, not in the Gmail interface.
+When I originally wrote this script, there was no official Google support for any such feature. Since then, [Google Inbox](https://www.google.com/inbox/) introduced a built-in "Snooze" feature, followed by one in [Gmail itself](https://www.blog.google/products/g-suite/new-security-and-intelligent-features-new-gmail-means-business/). These certainly have the advantage of being an official feature.
+
+Speaking personally, I find my gmail-tickler to be easier to use in the sense that (1) the deadline can be typed on the keyboard, and (2) the deadline can be expressed in relative terms (e.g., "8 days from now"). Snoozing an email in Gmail/Inbox seems to require lots of clicking around, not to mention math (if you want to figure out what day is 25 days from now).
 
 #### Followup[then]:
 
@@ -140,6 +144,10 @@ Google developers wrote [Gmail Snooze](http://googleappsdeveloper.blogspot.com/2
 14 Feb 2016: optional setting to remove labels on error [thanks, @lehrblogger]
 
 11 Oct 2016: intuitive handling of relative dates in labels [idea suggested by @lehrblogger], other refactorings
+
+27 Nov 2016: bugfix [thanks, @lehrblogger]
+
+16 Jul 2020: fixed broken compatibility with getYear / getFullYear [thanks @Hamzehn]
 
 ## To do list:
 
