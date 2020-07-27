@@ -23,6 +23,7 @@ var TICKLE = {
     label_prefix:       BASE_LABEL + '/@',
     default_time:       "8:00", // hh:mm, 24-hour format
 
+    timestamp_format:   "YYYY-MM-DD[ at ]HH:mm", // must fully-specify a timestamp, see README
     cleanup_labels:     true,   // remove the label containing the initial tickle-command
     cleanup_exempt:             // ... unless it's one of these:
         [ "tomorrow", "sun", "mon", "tue",
@@ -127,7 +128,7 @@ function tickleLabel(lbl) {
             errorLabel(lbl, target);
 
         } else {
-            var newlblname = TICKLE.label_prefix + "/" + date2str(target);
+            var newlblname = TICKLE.label_prefix + "/" + moment(target).format(TICKLE.timestamp_format);
             Logger.log("tickleLabel: moving " + threads.length + " items to label " + newlblname);
 
             if (DRY_RUN) return;
@@ -165,7 +166,7 @@ function emailTickleLabel(lbl) {
             errorLabel(lbl, target);
 
         } else {
-            var newlblname = TICKLE.label_prefix + "/" + date2str(target);
+            var newlblname = TICKLE.label_prefix + "/" + moment(target).format(TICKLE.timestamp_format);
             Logger.log("emailTickleLabel: moving thread to label " + newlblname);
 
             if (DRY_RUN) return;
@@ -205,7 +206,7 @@ function extractEmailTickleInfo(t) {
 function restoreLabel(lbl) {
     // TICKLE.label guaranteed to be prefix of lbl.getName(); +1 is for trailing slash
     var datestr = lbl.getName().substr( TICKLE.label_prefix.length + 1 );
-    var target = str2date(datestr);
+    var target = moment(datestr, TICKLE.timestamp_format).toDate();
     if (!target) {
         if (!datestr) errorLabel(lbl, "don't understand " + datestr);
         return;
@@ -247,39 +248,6 @@ function errorLabel(lbl, errMsg) {
         if (ERROR.move_to_inbox) threads[i].moveToInbox();
         if (ERROR.mark_unread) threads[i].markUnread();
     }
-}
-
-
-
-function twodigit (v) {
-    if (v < 10) v = "0" + v;
-    return "" + v;
-}
-
-function date2str (d) {
-    var Y, M, D, h, m;
-    Y = d.getFullYear();
-    M = twodigit( d.getMonth() + 1 );
-    D = twodigit( d.getDate() );
-    h = twodigit( d.getHours() );
-    m = twodigit( d.getMinutes() );
-
-    return Y + "-" + M + "-" + D + " at " + h + ":" + m;
-}
-
-function str2date (s) {
-    var matches = s.match(/^(\d{4})-(\d\d)-(\d\d) at (\d\d):(\d\d)$/);
-    if (!matches) return;
-    
-    var d = new Date();
-    d.setYear( matches[1] );
-    d.setMonth( matches[2]-1 );
-    d.setDate( matches[3] );
-    d.setHours( matches[4] );
-    d.setMinutes( matches[5] );
-    d.setSeconds(0);
-    d.setMilliseconds(0);
-    return d;
 }
 
 var DOW    = { sun:0, mon:1, tue:2, wed:3, thu:4, fri:5, sat:6 };
