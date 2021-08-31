@@ -1,4 +1,4 @@
-*
+/*
  * Gmail Tickler, a Google Apps script
  * written by Mike Rosulek, rosulekm@eecs.oregonstate.edu
  *
@@ -25,8 +25,8 @@ var TICKLE = {
 
     cleanup_labels:     true,   // remove the label containing the initial tickle-command
     cleanup_exempt:             // ... unless it's one of these:
-        [ "tomorrow", "sun", "mon", "tue",
-          "wed", "thu", "fri", "sat",
+        [ "today", "tomorrow", 
+          "sun", "mon", "tue", "wed", "thu", "fri", "sat",
           "1wk", "2wks"
         ].map( function(x){ return BASE_LABEL + "/" + x })
 };
