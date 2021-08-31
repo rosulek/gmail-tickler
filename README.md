@@ -27,7 +27,7 @@ Either way, the thread will reappear back in your inbox at the date+time you spe
     * Go to [script.google.com](https://script.google.com/), and create a new script, called "Tickler" or something.
     * Paste in code from the `gmail-tickler.gs` file in this repository. At the top of the script you will find some options to configure. If you are using the tickle-by-email-address feature, you must configure your email address.
 
-2. **Set timezone:** To make sure the Tickler script runs in your native timezone, open the script editor in Google Apps, and go to the "File" menu, "Project properties." There you will find a timezone configuration.
+2. **Set timezone:** To make sure the Tickler script runs in your native timezone, open the script editor in Google Apps, and go to the "File" menu, "Project properties." Check the box that says "Show "appsscript.json" manifest file in editor". You can then edit the `timeZone` value in the now-visible `appsscript.json` file.
 
 3. **Create the labels:** In the toolbar on the script editor is a dropdown where you can select a function to be executed. Select the `setup` function and press the play button. This will add the appropriate labels to your gmail. 
     > *Note:* The first time you run the script, you'll have to authorize it to access your GMail. You may have to refresh GMail browser sessions to see the new labels, give them colors, etc.
